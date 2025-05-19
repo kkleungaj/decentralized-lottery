@@ -19,6 +19,9 @@
             padding: 5px;
             margin: 5px;
         }
+        #participants p {
+            font-family: monospace;
+        }
     </style>
 </head>
 <body>
@@ -29,6 +32,8 @@
     <input type="number" id="numTickets" min="1" placeholder="Number of tickets">
     <button id="buyTickets">Buy Tickets</button>
     <button id="pickWinner">Pick Winner</button>
+    <h2>Participants</h2>
+    <div id="participants"><p>No participants yet.</p></div>
 
     <script>
         (async function() {
@@ -41,7 +46,7 @@
                 // Replace with your deployed contract address
                 const contractAddress = '0xE2EEb626EFdC904C816F752e293cd9DD5AaFd08B';
                 const contractABI = [
-                    // ABI from Remix after compilation 
+                    // Your contract's ABI (update as needed)
                     {
                         "inputs": [
                             {
@@ -194,7 +199,26 @@
                 const contract = new ethers.Contract(contractAddress, contractABI, provider);
                 const contractWithSigner = contract.connect(signer);
 
-                // Update UI with contract data
+                // Object to store ticket counts per address
+                let ticketCounts = {};
+
+                // Function to update the participants display
+                function updateParticipants() {
+                    const participantsDiv = document.getElementById('participants');
+                    participantsDiv.innerHTML = '';
+                    if (Object.keys(ticketCounts).length === 0) {
+                        participantsDiv.innerHTML = '<p>No participants yet.</p>';
+                    } else {
+                        for (const [address, count] of Object.entries(ticketCounts)) {
+                            const truncatedAddress = `${address.slice(0, 6)}...${address.slice(-4)}`;
+                            const p = document.createElement('p');
+                            p.textContent = `${truncatedAddress}: ${count} tickets`;
+                            participantsDiv.appendChild(p);
+                        }
+                    }
+                }
+
+                // Function to update pot size and tickets sold
                 async function updateInfo() {
                     const potSize = await contract.getPotSize();
                     document.getElementById('potSize').innerText = ethers.utils.formatEther(potSize);
@@ -202,7 +226,42 @@
                     document.getElementById('ticketsSold').innerText = ticketsSold.toString();
                 }
 
-                // Buy tickets button
+                // Initialize ticket counts from past events
+                async function initializeTicketCounts() {
+                    // Find the last WinnerSelected event to determine the current round
+                    const winnerFilter = contract.filters.WinnerSelected();
+                    const winnerEvents = await contract.queryFilter(winnerFilter, 0, 'latest');
+                    let lastWinnerBlock = 0;
+                    if (winnerEvents.length > 0) {
+                        lastWinnerBlock = winnerEvents[winnerEvents.length - 1].blockNumber;
+                    }
+
+                    // Fetch TicketBought events since the last reset
+                    const ticketFilter = contract.filters.TicketBought();
+                    const ticketEvents = await contract.queryFilter(ticketFilter, lastWinnerBlock + 1, 'latest');
+                    for (const event of ticketEvents) {
+                        const { buyer, numberOfTickets } = event.args;
+                        ticketCounts[buyer] = (ticketCounts[buyer] || 0) + numberOfTickets.toNumber();
+                    }
+                    updateParticipants();
+                }
+
+                // Listen for new TicketBought events
+                contract.on('TicketBought', (buyer, numberOfTickets, event) => {
+                    ticketCounts[buyer] = (ticketCounts[buyer] || 0) + numberOfTickets.toNumber();
+                    updateParticipants();
+                    updateInfo();
+                });
+
+                // Listen for WinnerSelected events to reset ticket counts
+                contract.on('WinnerSelected', (winner, prize, event) => {
+                    ticketCounts = {};
+                    updateParticipants();
+                    updateInfo();
+                    document.getElementById('winner').innerText = `${winner.slice(0, 6)}...${winner.slice(-4)}`;
+                });
+
+                // Buy tickets button functionality
                 document.getElementById('buyTickets').addEventListener('click', async () => {
                     const numTickets = document.getElementById('numTickets').value;
                     if (numTickets <= 0) {
@@ -221,7 +280,7 @@
                     }
                 });
 
-                // Pick winner button
+                // Pick winner button functionality
                 document.getElementById('pickWinner').addEventListener('click', async () => {
                     const owner = await contract.owner();
                     const signerAddress = await signer.getAddress();
@@ -239,14 +298,9 @@
                     }
                 });
 
-                // Listen to WinnerSelected event
-                contract.on('WinnerSelected', (winner, prize) => {
-                    document.getElementById('winner').innerText = winner;
-                    updateInfo();
-                });
-
-                // Initial update
-                updateInfo();
+                // Initial setup
+                await initializeTicketCounts();
+                await updateInfo();
             } else {
                 alert('Please install MetaMask');
             }
