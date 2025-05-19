@@ -39,19 +39,156 @@
                 const signer = provider.getSigner();
 
                 // Replace with your deployed contract address
-                const contractAddress = '0x8D7Bc37c364a4354Ec09a74366ee863c3c49a146';
+                const contractAddress = '0x82624297Fa22A6Dc997D6bB72E90036f5AFcf2cB';
                 const contractABI = [
-                    // ABI from Remix after compilation
-                    {"inputs":[],"stateMutability":"nonpayable","type":"constructor"},
-                    {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"buyer","type":"address"},{"indexed":false,"internalType":"uint256","name":"numberOfTickets","type":"uint256"}],"name":"TicketBought","type":"event"},
-                    {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"winner","type":"address"},{"indexed":false,"internalType":"uint256","name":"prize","type":"uint256"}],"name":"WinnerSelected","type":"event"},
-                    {"inputs":[{"internalType":"uint256","name":"numberOfTickets","type":"uint256"}],"name":"buyTickets","outputs":[],"stateMutability":"payable","type":"function"},
-                    {"inputs":[],"name":"getNumberOfTickets","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
-                    {"inputs":[],"name":"getPotSize","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
-                    {"inputs":[],"name":"lotteryOpen","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},
-                    {"inputs":[],"name":"owner","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},
-                    {"inputs":[],"name":"pickWinner","outputs":[],"stateMutability":"nonpayable","type":"function"},
-                    {"inputs":[],"name":"ticketPrice","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"}
+                    // ABI from Remix after compilation 
+                    {
+                        "inputs": [
+                            {
+                                "internalType": "uint256",
+                                "name": "numberOfTickets",
+                                "type": "uint256"
+                            }
+                        ],
+                        "name": "buyTickets",
+                        "outputs": [],
+                        "stateMutability": "payable",
+                        "type": "function"
+                    },
+                    {
+                        "inputs": [],
+                        "name": "pickWinner",
+                        "outputs": [],
+                        "stateMutability": "nonpayable",
+                        "type": "function"
+                    },
+                    {
+                        "inputs": [],
+                        "stateMutability": "nonpayable",
+                        "type": "constructor"
+                    },
+                    {
+                        "anonymous": false,
+                        "inputs": [
+                            {
+                                "indexed": true,
+                                "internalType": "address",
+                                "name": "buyer",
+                                "type": "address"
+                            },
+                            {
+                                "indexed": false,
+                                "internalType": "uint256",
+                                "name": "numberOfTickets",
+                                "type": "uint256"
+                            }
+                        ],
+                        "name": "TicketBought",
+                        "type": "event"
+                    },
+                    {
+                        "anonymous": false,
+                        "inputs": [
+                            {
+                                "indexed": true,
+                                "internalType": "address",
+                                "name": "winner",
+                                "type": "address"
+                            },
+                            {
+                                "indexed": false,
+                                "internalType": "uint256",
+                                "name": "prize",
+                                "type": "uint256"
+                            }
+                        ],
+                        "name": "WinnerSelected",
+                        "type": "event"
+                    },
+                    {
+                        "inputs": [],
+                        "name": "getNumberOfTickets",
+                        "outputs": [
+                            {
+                                "internalType": "uint256",
+                                "name": "",
+                                "type": "uint256"
+                            }
+                        ],
+                        "stateMutability": "view",
+                        "type": "function"
+                    },
+                    {
+                        "inputs": [],
+                        "name": "getPotSize",
+                        "outputs": [
+                            {
+                                "internalType": "uint256",
+                                "name": "",
+                                "type": "uint256"
+                            }
+                        ],
+                        "stateMutability": "view",
+                        "type": "function"
+                    },
+                    {
+                        "inputs": [],
+                        "name": "lotteryOpen",
+                        "outputs": [
+                            {
+                                "internalType": "bool",
+                                "name": "",
+                                "type": "bool"
+                            }
+                        ],
+                        "stateMutability": "view",
+                        "type": "function"
+                    },
+                    {
+                        "inputs": [],
+                        "name": "owner",
+                        "outputs": [
+                            {
+                                "internalType": "address",
+                                "name": "",
+                                "type": "address"
+                            }
+                        ],
+                        "stateMutability": "view",
+                        "type": "function"
+                    },
+                    {
+                        "inputs": [
+                            {
+                                "internalType": "uint256",
+                                "name": "",
+                                "type": "uint256"
+                            }
+                        ],
+                        "name": "participants",
+                        "outputs": [
+                            {
+                                "internalType": "address",
+                                "name": "",
+                                "type": "address"
+                            }
+                        ],
+                        "stateMutability": "view",
+                        "type": "function"
+                    },
+                    {
+                        "inputs": [],
+                        "name": "ticketPrice",
+                        "outputs": [
+                            {
+                                "internalType": "uint256",
+                                "name": "",
+                                "type": "uint256"
+                            }
+                        ],
+                        "stateMutability": "view",
+                        "type": "function"
+                    }
                 ];
 
                 const contract = new ethers.Contract(contractAddress, contractABI, provider);
