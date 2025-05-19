@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Decentralized Lottery</title>
+    <script src="https://cdn.ethers.io/lib/ethers-5.6.9.umd.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin-top: 50px;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+        }
+        input {
+            padding: 5px;
+            margin: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Decentralized Lottery</h1>
+    <p>Pot Size: <span id="potSize">0</span> ETH</p>
+    <p>Number of Tickets Sold: <span id="ticketsSold">0</span></p>
+    <p>Winner: <span id="winner">None</span></p>
+    <input type="number" id="numTickets" min="1" placeholder="Number of tickets">
+    <button id="buyTickets">Buy Tickets</button>
+    <button id="pickWinner">Pick Winner</button>
+
+    <script>
+        (async function() {
+            if (typeof window.ethereum !== 'undefined') {
+                console.log('MetaMask is installed!');
+                const provider = new ethers.providers.Web3Provider(window.ethereum);
+                await provider.send("eth_requestAccounts", []);
+                const signer = provider.getSigner();
+
+                // Replace with your deployed contract address
+                const contractAddress = '0x8D7Bc37c364a4354Ec09a74366ee863c3c49a146';
+                const contractABI = [
+                    // ABI from Remix after compilation
+                    {"inputs":[],"stateMutability":"nonpayable","type":"constructor"},
+                    {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"buyer","type":"address"},{"indexed":false,"internalType":"uint256","name":"numberOfTickets","type":"uint256"}],"name":"TicketBought","type":"event"},
+                    {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"winner","type":"address"},{"indexed":false,"internalType":"uint256","name":"prize","type":"uint256"}],"name":"WinnerSelected","type":"event"},
+                    {"inputs":[{"internalType":"uint256","name":"numberOfTickets","type":"uint256"}],"name":"buyTickets","outputs":[],"stateMutability":"payable","type":"function"},
+                    {"inputs":[],"name":"getNumberOfTickets","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+                    {"inputs":[],"name":"getPotSize","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+                    {"inputs":[],"name":"lotteryOpen","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},
+                    {"inputs":[],"name":"owner","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},
+                    {"inputs":[],"name":"pickWinner","outputs":[],"stateMutability":"nonpayable","type":"function"},
+                    {"inputs":[],"name":"ticketPrice","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"}
+                ];
+
+                const contract = new ethers.Contract(contractAddress, contractABI, provider);
+                const contractWithSigner = contract.connect(signer);
+
+                // Update UI with contract data
+                async function updateInfo() {
+                    const potSize = await contract.getPotSize();
+                    document.getElementById('potSize').innerText = ethers.utils.formatEther(potSize);
+                    const ticketsSold = await contract.getNumberOfTickets();
+                    document.getElementById('ticketsSold').innerText = ticketsSold.toString();
+                }
+
+                // Buy tickets button
+                document.getElementById('buyTickets').addEventListener('click', async () => {
+                    const numTickets = document.getElementById('numTickets').value;
+                    if (numTickets <= 0) {
+                        alert('Please enter a valid number of tickets');
+                        return;
+                    }
+                    const ticketPrice = await contract.ticketPrice();
+                    const totalCost = ticketPrice.mul(numTickets);
+                    try {
+                        const tx = await contractWithSigner.buyTickets(numTickets, { value: totalCost });
+                        await tx.wait();
+                        updateInfo();
+                    } catch (error) {
+                        console.error(error);
+                        alert('Transaction failed');
+                    }
+                });
+
+                // Pick winner button
+                document.getElementById('pickWinner').addEventListener('click', async () => {
+                    const owner = await contract.owner();
+                    const signerAddress = await signer.getAddress();
+                    if (signerAddress.toLowerCase() === owner.toLowerCase()) {
+                        try {
+                            const tx = await contractWithSigner.pickWinner();
+                            await tx.wait();
+                            updateInfo();
+                        } catch (error) {
+                            console.error(error);
+                            alert('Transaction failed');
+                        }
+                    } else {
+                        alert('Only the owner can pick the winner');
+                    }
+                });
+
+                // Listen to WinnerSelected event
+                contract.on('WinnerSelected', (winner, prize) => {
+                    document.getElementById('winner').innerText = winner;
+                    updateInfo();
+                });
+
+                // Initial update
+                updateInfo();
+            } else {
+                alert('Please install MetaMask');
+            }
+        })();
+    </script>
+</body>
+</html>
