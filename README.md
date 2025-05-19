@@ -1,4 +1,4 @@
-# Decentralized Lottery DApp
+# COMP4541 project: Decentralized Lottery DApp
 
 ## Overview
 A decentralized lottery application where users buy tickets with Ether, and the owner selects a random winner who receives 99% of the pot (1% fee to the owner).
